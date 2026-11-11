@@ -1,0 +1,63 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+# Release notes live in CHANGELOG.md. The version's Major.Minor lives in Directory.Build.props
+# (VersionMajorMinor) and is read back below; the patch is <run_number><run_attempt>.
+
+env:
+  BUILD_CONF: Release
+  VERSION_REV: ${{ github.run_attempt }}
+  VERSION_HASH: +${{ github.sha }}
+  # The version step CAPTURES stdout, so the SDK first-run banner must not be able to land in it.
+  DOTNET_NOLOGO: 1
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 10.0.x
+    - name: Resolve version prefix
+      run: |
+        MM="$(dotnet msbuild Directory.Build.props -getProperty:VersionMajorMinor -nologo)"
+        case "$MM" in
+          [0-9]*.[0-9]*) ;;
+          *) echo "::error::VersionMajorMinor did not resolve from Directory.Build.props (got '$MM')"; exit 1 ;;
+        esac
+        echo "VERSION_PREFIX=${MM}.${{ github.run_number }}" >> "$GITHUB_ENV"
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build -c $BUILD_CONF --no-restore -p:Version=${VERSION_PREFIX}${VERSION_REV}${VERSION_HASH} -p:FileVersion=${VERSION_PREFIX}.${VERSION_REV} -p:ContinuousIntegrationBuild=true
+    - name: Test
+      # --no-build matters beyond speed: a rebuild here would pack the library AGAIN at the default
+      # local version, and the upload below would ship that stray X.Y.0 too.
+      run: dotnet test --project src/SharpAstro.Firebase.Tests -c $BUILD_CONF --no-build
+    - name: Upload NuGet package
+      uses: actions/upload-artifact@v7
+      with:
+        name: nuget-packages
+        path: '**/*.nupkg'
+        retention-days: 5
+
+  publish-nuget:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+    - name: Download NuGet packages
+      uses: actions/download-artifact@v8
+      with:
+        name: nuget-packages
+    - name: Push NuGet package
+      run: dotnet nuget push **/*.nupkg -s nuget.org -k ${{ secrets.NUGET_API_KEY }} --skip-duplicate

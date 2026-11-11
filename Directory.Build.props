@@ -1,0 +1,45 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- THE version for this repo, and the only place it is written. It used to be stated three
+         times: VersionPrefix and AssemblyVersion in the csproj, and VERSION_PREFIX in
+         .github/workflows/dotnet.yml. CI stamps one -p:Version over the build, so the csproj pair
+         only ever showed up in a local build, which is exactly where nobody looks, while the
+         workflow copy silently decided what got published. Nothing compared them.
+         The workflow now READS this back (dotnet msbuild -getProperty:VersionMajorMinor), so a
+         release bump is this one line and CI cannot publish a version the packages disagree with. -->
+    <VersionMajorMinor>1.0</VersionMajorMinor>
+    <!-- Local builds get Major.Minor.0; CI passes -p:Version=Major.Minor.<run><attempt>+<sha>, and
+         the condition lets it win. -->
+    <VersionPrefix Condition="'$(VersionPrefix)' == ''">$(VersionMajorMinor).0</VersionPrefix>
+    <!-- Assembly identity, major.minor.0.0. This was already derived, but from the csproj; it sits here
+         now so every project in the repo gets it and there is nothing to restate. CI stamps -p:Version
+         and -p:FileVersion but NOT -p:AssemblyVersion, so a per-project literal would win in the build
+         that ships — which is how DIR.Lib published 6.4.0.0 for two majors. Only Major.Minor is
+         significant: the build counter stays out, so a republish of the same X.Y keeps its identity. -->
+    <AssemblyVersion>$(VersionMajorMinor).0.0</AssemblyVersion>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <CreateHardLinksForCopyLocalIfPossible>true</CreateHardLinksForCopyLocalIfPossible>
+    <CreateHardLinksForCopyFilesToOutputDirectoryIfPossible>true</CreateHardLinksForCopyFilesToOutputDirectoryIfPossible>
+    <CreateHardLinksForCopyAdditionalFilesIfPossible>true</CreateHardLinksForCopyAdditionalFilesIfPossible>
+    <CreateHardLinksForAdditionalFilesIfPossible>true</CreateHardLinksForAdditionalFilesIfPossible>
+    <CreateHardLinksForPublishFilesIfPossible>true</CreateHardLinksForPublishFilesIfPossible>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Ship the /// comments in the package so consumers get IntelliSense. Keyed on the name
+         rather than IsPackable, which test projects set in their own csproj, after this file is
+         read. CS1591 (public member without a comment) and CS1573 (a parameter without a
+         <param> when its siblings have one) are silenced: the point is to ship the docs that
+         exist, not to demand them everywhere. Broken crefs and paramrefs still warn. -->
+    <GenerateDocumentationFile Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+  </PropertyGroup>
+
+</Project>

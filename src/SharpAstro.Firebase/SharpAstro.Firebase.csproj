@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>SharpAstro.Firebase</RootNamespace>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <!-- No version properties here. AssemblyVersion and VersionPrefix are both derived from the one
+         place the number is written (VersionMajorMinor in the repo-root Directory.Build.props). The
+         NuGet package version is composed in CI from that same property. Bump it THERE. -->
+    <PackageId>SharpAstro.Firebase</PackageId>
+    <Description>Firebase Realtime Database client with no SDK and no package dependencies: REST reads and writes, a server-sent-event change stream folded into whole values, anonymous sign-in with token refresh, silent reconnect. AOT/trim clean. Plus an in-memory database that models RTDB's leaf-tree semantics, for testing an app's cloud logic with no cloud.</Description>
+    <PackageTags>Firebase;RealtimeDatabase;RTDB;SSE;ServerSentEvents;Relay;AOT</PackageTags>
+    <Authors>Sebastian Godelet</Authors>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/SharpAstro/Firebase.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SharpAstro.Firebase.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>
