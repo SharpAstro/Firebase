@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SharpAstro.Firebase/SharpAstro.Firebase.csproj" />
+    <Project Path="src/SharpAstro.Firebase.Tests/SharpAstro.Firebase.Tests.csproj" />
+  </Folder>
+</Solution>
